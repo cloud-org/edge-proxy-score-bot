@@ -1,0 +1,28 @@
+name: "rank"
+
+on:
+  schedule:
+    - cron: "0 2,4,6,8,10,12,14,16 * * *" # 10-24 每两小时
+  workflow_dispatch:
+
+jobs:
+  today:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.18
+
+      - name: run cmd
+        run: |
+          go mod tidy
+          go run main.go -dingtalk ${{ secrets.Dingtalk_TOKEN }}
+      - name: echo
+        run: |
+          echo "notify ok"
