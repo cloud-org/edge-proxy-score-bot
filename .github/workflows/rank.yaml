@@ -1,8 +1,8 @@
 name: "rank"
 
 on:
-  schedule:
-    - cron: "0 2,4,6,8,10,12,14,16 * * *" # 10-24 每两小时
+#  schedule: # now use fc instead of github actions
+#    - cron: "0 2,4,6,8,10,12,14,16 * * *" # 10-24 每两小时
   workflow_dispatch:
 
 jobs:
@@ -23,6 +23,3 @@ jobs:
         run: |
           go mod tidy
           go run main.go -dingtalk ${{ secrets.Dingtalk_TOKEN }}
-      - name: echo
-        run: |
-          echo "notify ok"
