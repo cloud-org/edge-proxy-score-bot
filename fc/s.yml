@@ -1,0 +1,42 @@
+edition: 1.0.0
+name: compoent-test
+access: '{{ access }}'
+services:
+  cn-shenzhen-rankListNotification-edge-proxy-score-bot:
+    component: devsapp/fc
+    props:
+      region: cn-shenzhen
+      service:
+        logConfig:
+          enableRequestMetrics: true
+          enableInstanceMetrics: true
+          logBeginRule: DefaultRegex
+          project: aliyun-fc-cn-xxx # your project
+          logstore: function-log
+        role: acs:ram::xxx # your aliyun fc role
+        internetAccess: true
+        description: edge-proxy rank 通知
+        name: rankListNotification
+      function:
+        handler: main
+        instanceType: e1
+        runtime: go1
+        timeout: 60
+        instanceConcurrency: 1
+        memorySize: 128
+        environmentVariables:
+          Dingtalk_TOKEN: xxx # your dingtalk token
+          TZ: Asia/Shanghai
+        internetAccess: true
+        name: edge-proxy-score-bot
+        asyncConfiguration: {}
+        codeUri: '******'
+      triggers:
+        - name: invoke
+          description: ''
+          type: timer
+          qualifier: LATEST
+          config:
+            payload: ping
+            cronExpression: CRON_TZ=Asia/Shanghai 0 1 0,10,12,14,16,18,20,22 * * *
+            enable: true
