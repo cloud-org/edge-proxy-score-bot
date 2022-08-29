@@ -22,57 +22,41 @@
  * SOFTWARE.
  */
 
-package main
+package api
 
 import (
+	"bytes"
 	"context"
-	"edge-proxy-score-bot/api"
-	"flag"
 	"fmt"
 	"log"
-	"os"
-
-	"github.com/cloud-org/msgpush"
 )
 
-var (
-	dingtalk string // dingtalk 通知链接
-	help     bool   // 帮助
-)
-
-func init() {
-	flag.StringVar(&dingtalk, "dingtalk", "", "dingtalk webhook url")
-	flag.BoolVar(&help, "h", false, "帮助")
-	flag.Usage = usage
-}
-
-func usage() {
-	fmt.Fprintf(os.Stdout, `edge-proxy-score-bot - rankList push
-Usage: edge-proxy-score-bot [-h help]
-Options:
-`)
-	flag.PrintDefaults()
-}
-
-func main() {
-	flag.Parse()
-	if help {
-		flag.PrintDefaults()
-		return
-	}
-
-	msg, err := api.GetEdgeProxyMsg(context.TODO())
+func GetEdgeProxyMsg(ctx context.Context) (*string, error) {
+	// you can modify this link for other tianchi race
+	url := "https://tianchi.aliyun.com/competition/proxy/api/competition/api/race/season/ranking/list?pageNum=1&pageSize=5&season=-1&raceId=531984&userId=-1"
+	resp, err := GetRankList(ctx, url)
 	if err != nil {
-		log.Printf("get edge proxy msg err: %v\n", err)
-		return
+		log.Printf("获取排行榜列表失败: %v\n", err)
+		return nil, err
 	}
 
-	log.Println(*msg)
-
-	if dingtalk != "" {
-		w := msgpush.NewDingTalk(dingtalk)
-		_ = w.SendText(*msg)
+	if resp.Code != "SUCCESS" {
+		log.Printf("code 不为 SUCCESS\n")
+		return nil, fmt.Errorf("code 不为 SUCCESS")
 	}
 
-	return
+	raceName := resp.Data.RaceVO.RaceName
+	// rank1: xx score: xx
+	var temp bytes.Buffer
+	temp.WriteString(raceName)
+	temp.WriteString("\n")
+	for i := 0; i < len(resp.Data.List); i++ {
+		item := resp.Data.List[i]
+		content := fmt.Sprintf("rank%d: %s, score: %v, resourceusage: %v\n", item.Rank, item.TeamName, item.Score, item.ScoreJSONObject.ScoreResourceUsage)
+		temp.WriteString(content)
+	}
+
+	msg := temp.String()
+
+	return &msg, nil
 }
